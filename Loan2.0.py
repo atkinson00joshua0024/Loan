@@ -559,9 +559,10 @@ for i, (scenario_name, macro_factors) in enumerate(forecast_scenarios.items()):
     portfolio_loss_rate_filtered = total_el_filtered / total_portfolio_value_filtered if total_portfolio_value_filtered > 0 else 0
 
     with col_summary_display[i]:
-        st.subheader(f"{scenario_name} (Filtered)") # Updated subheader to indicate filter
-        st.metric(label="Total Expected Loss ($)", value=f"${total_el_filtered :,.0f}")
-        st.metric(label="Portfolio Loss Rate (%)", value=f"{portfolio_loss_rate_filtered:.2%}")
+        st.subheader(f"{scenario_name}")
+        el_display = f"${total_el_filtered/1_000_000:.2f}M" if total_el_filtered >= 1_000_000 else f"${total_el_filtered:,.0f}"
+        st.metric(label="Total Expected Loss", value=el_display)
+        st.metric(label="Portfolio Loss Rate", value=f"{portfolio_loss_rate_filtered:.2%}")
 
 st.subheader("Scenario Impact (Relative to Base Case of Filtered Portfolio)")
 # Recalculate impact_df for filtered data
@@ -721,7 +722,6 @@ This Streamlit application demonstrates a highly sophisticated framework for an 
 5.  **Granular Portfolio Segmentation & Vintage Analysis:** Breaks down Expected Losses by FICO segment, Origination Vintage, and Vehicle Type with corresponding visualizations.
 6.  **Automated & Advanced Visualization:** Generates professional-grade plots to illustrate key findings dynamically.
 """)
-
 
 
 
