@@ -1,7 +1,9 @@
-streamlit
+treamlit
 pandas
 numpy
 matplotlib
 seaborn
 scikit-learn
-pandas_datareader
+statsmodels
+xlsxwriter
+requests
