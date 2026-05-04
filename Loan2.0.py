@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score, mean_squared_error
-import pandas_datareader as pdr
+import requests
 import io
 
 # --- Configuration ---
@@ -155,14 +155,26 @@ def generate_current_loan_portfolio(num_loans=50000): # Increased default curren
 
 @st.cache_data(show_spinner="Fetching real macroeconomic data...")
 def fetch_macro_data(start_date=datetime(2000, 1, 1), end_date=datetime.now()):
-    """Fetches real macroeconomic data from FRED."""
+    """Fetches real macroeconomic data from FRED via direct API calls."""
     try:
-        macro_data = pdr.DataReader(['UNRATE', 'GDP'], 'fred', start_date, end_date)
-        # Forward-fill GDP to align with monthly UNRATE for display purposes
+        base = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+        start_str = start_date.strftime('%Y-%m-%d')
+        end_str = end_date.strftime('%Y-%m-%d') if hasattr(end_date, 'strftime') else datetime.now().strftime('%Y-%m-%d')
+
+        unrate_r = requests.get(f"{base}?id=UNRATE&vintage_date={end_str}", timeout=15)
+        unrate_df = pd.read_csv(pd.io.common.StringIO(unrate_r.text), index_col=0, parse_dates=True)
+        unrate_df.columns = ['UNRATE']
+
+        gdp_r = requests.get(f"{base}?id=GDP&vintage_date={end_str}", timeout=15)
+        gdp_df = pd.read_csv(pd.io.common.StringIO(gdp_r.text), index_col=0, parse_dates=True)
+        gdp_df.columns = ['GDP']
+
+        macro_data = unrate_df.join(gdp_df, how='outer')
+        macro_data = macro_data[macro_data.index >= pd.to_datetime(start_date)]
         macro_data['GDP'] = macro_data['GDP'].ffill()
         return macro_data
     except Exception as e:
-        st.error(f"Error fetching macro data from FRED: {e}. Using simulated values.")
+        st.warning(f"Could not fetch macro data from FRED: {e}. Using simulated values.")
         return None
 
 # --- Model Training Functions ---
